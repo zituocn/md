@@ -42,7 +42,7 @@ func (this *MdHandle) Get() {
 		common := blackfriday.MarkdownCommon(data)
 		content = string(common)
 	} else {
-		content = "文章空白"
+		content = "空白文章..."
 	}
 	this.Data["content"] = content
 	this.TplName = "_readfile.html"
