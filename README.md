@@ -1,9 +1,10 @@
 # MarkDown for beego
 ### 介绍 
 markdown 在beego中的使用，请重点看router.go中的路由方式  
-`beego.Router("/md/*", &controllers.MdHandle{})`
+`beego.Router("/md/*", &controllers.MdHandle{})`  
 markdown使用第三方包  
 `github.com/russross/blackfriday`  
+
 只需把md文件放在`file`目录下的某个地方，即可用  
 `http://ip:port/md/xxx.md`  
 来访问
