@@ -1,45 +1,109 @@
 package controllers
 
 import (
+	"fmt"
 	"github.com/astaxie/beego"
 	"github.com/russross/blackfriday"
+
 	"io/ioutil"
 	"os"
 	"strings"
+	"time"
 )
 
 type MdHandle struct {
 	beego.Controller
 }
 
+var (
+	dRoot = "file" //文档根目录
+)
+
+type FileInfo struct {
+	Path     string
+	Name     string
+	FileSize int64
+	Modtime  time.Time
+	Isdir    bool
+}
+
 const DEFAULT_TITLE = ""
 
-func (this *MdHandle) Get() {
-	var (
-		dRoot   = "file"
-		link    string
-		content string
-	)
-
-	link = this.GetString(":splat")
-	beego.Info(link)
-
-	if len(link) == 0 {
-		this.Abort("404")
+//字串处理
+func substr(s string, pos, length int) string {
+	runes := []rune(s)
+	l := pos + length
+	if l > len(runes) {
+		l = len(runes)
 	}
+	return string(runes[pos:l])
+}
 
-	//文件的绝对地址
-	link = dRoot + "/" + link
-	file, err := os.Open(link)
+//获取上一级目录
+func getParentDirectory(dirctory string) string {
+	if strings.Index(dirctory, "/") > -1 {
+		return substr(dirctory, 0, strings.LastIndex(dirctory, "/"))
+	}
+	return ""
+}
+
+// @title 读取file目录下的文件列表或目录在页面上打印出来
+// @router /md/ [get]
+func (this *MdHandle) GetFileList() {
+	var (
+		path       string
+		parentPath string
+	)
+	path = this.GetString("path")
+	if len(path) == 0 {
+		path = dRoot
+	}
+	if strings.Index(path, ".md") > -1 {
+		title, content := getMarkDown(path)
+		this.Data["content"] = content
+		this.Data["title"] = title
+		this.TplName = "_readfile.html"
+	} else {
+		files, err := WalkDir(path)
+		if err != nil {
+			beego.Info(err.Error())
+		}
+		parentPath = getParentDirectory(path)
+		this.Data["parentPath"] = parentPath
+
+		this.Data["files"] = files
+		this.Data["path"] = path
+		this.TplName = "_index.html"
+	}
+}
+
+func WalkDir(path string) (files []*FileInfo, err error) {
+	if path == "" {
+		path = dRoot
+	}
+	file, err := ioutil.ReadDir(path)
 	if err != nil {
-		beego.Debug(err.Error())
-		this.Abort("404")
+		beego.Info(err)
+	}
+	for _, fi := range file {
+		if fi.IsDir() {
+			files = append(files, &FileInfo{path, fi.Name(), fi.Size(), fi.ModTime(), true})
+		} else {
+			files = append(files, &FileInfo{path, fi.Name(), fi.Size(), fi.ModTime(), false})
+		}
+	}
+	return files, nil
+}
+
+func getMarkDown(path string) (title string, content string) {
+	file, err := os.Open(path)
+	if err != nil {
+		beego.Info(err.Error())
 	}
 	defer file.Close()
 	data, err := ioutil.ReadAll(file)
 	if err != nil {
-		beego.Debug(err.Error())
-
+		beego.Info(err.Error())
 	}
 
 	extensions := 0
@@ -50,7 +114,7 @@ func (this *MdHandle) Get() {
 	extensions |= blackfriday.EXTENSION_STRIKETHROUGH
 	extensions |= blackfriday.EXTENSION_SPACE_HEADERS
 
-	title := ""
+	title = ""
 	htmlFlags := 0
 	//htmlFlags |= blackfriday.HTML_USE_XHTML
 	htmlFlags |= blackfriday.HTML_USE_SMARTYPANTS
@@ -70,9 +134,7 @@ func (this *MdHandle) Get() {
 	} else {
 		content = "空白文章..."
 	}
-	this.Data["content"] = content
-	this.Data["title"] = title
-	this.TplName = "_readfile.html"
+	return title, content
 }
 
 //获取文章标题
@@ -121,4 +183,22 @@ func getTitle(input []byte) string {
 	}
 
 	return strings.TrimSpace(string(line1))
+}
+
+func DateT(t time.Time, format string) string {
+	res := strings.Replace(format, "MM", t.Format("01"), -1)
+	res = strings.Replace(res, "M", t.Format("1"), -1)
+	res = strings.Replace(res, "DD", t.Format("02"), -1)
+	res = strings.Replace(res, "D", t.Format("2"), -1)
+	res = strings.Replace(res, "YYYY", t.Format("2006"), -1)
+	res = strings.Replace(res, "YY", t.Format("06"), -1)
+	res = strings.Replace(res, "HH", fmt.Sprintf("%02d", t.Hour()), -1)
+	res = strings.Replace(res, "H", fmt.Sprintf("%d", t.Hour()), -1)
+	res = strings.Replace(res, "hh", t.Format("03"), -1)
+	res = strings.Replace(res, "h", t.Format("3"), -1)
+	res = strings.Replace(res, "mm", t.Format("04"), -1)
+	res = strings.Replace(res, "m", t.Format("4"), -1)
+	res = strings.Replace(res, "ss", t.Format("05"), -1)
+	res = strings.Replace(res, "s", t.Format("5"), -1)
+	return res
 }

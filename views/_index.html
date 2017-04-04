@@ -1,9 +1,8 @@
-
 <!DOCTYPE HTML>
 <html>
 <head>
 	<meta charset="utf-8"/>
-	<title>beego开发的MarkDown浏览器 - 首页</title>
+	<title>文档浏览器</title>
 	<link rel="stylesheet" href="/static/css/md02.css"/>
 	<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
 	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=2.0, minimum-scale=1.0, user-scalable=yes" />
@@ -11,22 +10,26 @@
 	<meta name="apple-mobile-web-app-capable" content="yes" />
 	<meta name="apple-mobile-web-app-status-bar-style" content="black" />
 	<meta content="telephone=no" name="format-detection" />
+	<style type="text/css">
+		.files{padding-bottom:30px;} 
+		.files li{line-height:32px;font-size:18px;border-bottom: 1px solid #efefef;}
+		.files li .size{color:#999;font-style:italic}
+		.files li .dir{color:#666;}
+		.files li .file{color:#07982d;}
+
+	</style>
 </head>
 <body>
 <article class="markdown-body">
-	<h2>Beego开发的MarkDown 文档浏览器</h2>
-	<h4>项目地址:</h4> 
-	<code><a href="https://github.com/zituocn/md" target="_blank">https://github.com/zituocn/md</a></code>
-	<h4>go get 安装</h4>
-	<code>go get -u github.com/zituocn/md</code>
-	<h4>git clone</h4>
-	<code>git clone https://github.com/zituocn/md.git</code>
-	<h4>运行：</h4>
-	<code>go build <br />./md</code>
-	<h4>配置修改：</h4>
-	<code>vi /conf/app.conf</code>
-	<h4>介绍：</h4>
-	<code><a href="https://github.com/zituocn/md/README.md" target="_blank">https://github.com/zituocn/md/README.md</a></code>
+<h2>文档浏览器</h2>
+<ul class="files">
+<li>当前：/{{.path}}</li>
+<li><a href="/">/</a></li>
+<li><a href="?path={{.parentPath}}">../</a></li>
+{{range .files}}
+	<li>[{{.Isdir | getDirFileStatus}}]  - <a href="?path={{.Path}}/{{.Name}}">{{.Name}}</a> - <span class="size">{{.FileSize}}</span></li>
+{{end}}
+</ul>
 </article>
 </body>
 </html>

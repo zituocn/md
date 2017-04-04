@@ -6,6 +6,6 @@ import (
 )
 
 func init() {
-	beego.Router("/", &controllers.IndexHandle{})
-	beego.Router("/md/*", &controllers.MdHandle{})
+	beego.Router("/", &controllers.MdHandle{}, "get:GetFileList")
+
 }
